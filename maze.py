@@ -32,13 +32,18 @@ class MazeEnv(object):
 
         self._maze, self._step_count = None, None
         self._goal_pos, self._player_pos = None, None
+        self._episode_reward = 0
         self.reset()
 
     def step(self, action):
         reward, terminal = self._step(action)
         state = self._process_state()
+        self._episode_reward += reward
 
-        info = {'reward': reward}
+        if terminal:
+            info = {'episode_reward': self._episode_reward}
+        else:
+            info = {}
         return state, reward, terminal, info
 
     def reset(self):
@@ -56,6 +61,7 @@ class MazeEnv(object):
                 break
 
         self._step_count = 0
+        self._episode_reward = 0
         return state
 
     def _step(self, action):
