@@ -16,14 +16,14 @@ logger.setLevel(logging.INFO)
 universe.configure_logging()
 
 def create_env(env_id, client_id, remotes, **kwargs):
+    if env_id.startswith('level'):
+        return MazeEnv(env_id)
     spec = gym.spec(env_id)
 
     if spec.tags.get('flashgames', False):
         return create_flash_env(env_id, client_id, remotes, **kwargs)
     elif spec.tags.get('atari', False) and spec.tags.get('vnc', False):
         return create_vncatari_env(env_id, client_id, remotes, **kwargs)
-    elif env_id.startswith('level'):
-        return MazeEnv(env_id)
     else:
         # Assume atari.
         assert "." not in env_id  # universe environments have dots in names.

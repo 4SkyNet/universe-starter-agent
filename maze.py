@@ -2,16 +2,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-from builtins import range
-from builtins import object
-
 import sys
 import logging
 import numpy as np
-from PIL import Image
-
-from relaax.environment.config import options
-from relaax.common.rlx_message import RLXMessageImage
 
 log = logging.getLogger(__name__)
 
@@ -26,12 +19,12 @@ class MazeEnv(object):
     goal_cost = 1.0
     max_steps = 100
 
-    def __init__(self, env='level_1'):
+    def __init__(self, env='level_1', shape=(7, 7), no_op_max=0):
         self._level = self._read_level(env)
-        self._no_op_max = options.get('environment/no_op_max', 0)
+        self._no_op_max = no_op_max
 
-        self.shape = options.get('environment/shape', [7, 7])
-        assert len(self.shape) == 2, "You should provide shape as [x, y]"
+        self.shape = list(shape + (3,))
+        assert len(self.shape) == 3, "You should provide shape as [x, y]"
         self.range = [int((self.shape[0]-1)/2), int((self.shape[1]-1)/2)]
 
         self.action_size = len(MazeEnv.actions)
@@ -78,11 +71,10 @@ class MazeEnv(object):
             return -MazeEnv.step_cost, self._step_count >= MazeEnv.max_steps
 
     def _process_state(self):
-        region = self._maze[self._player_pos[0]-self.range[0]:self._player_pos[0]+self.range[0],
-                            self._player_pos[1]-self.range[1]:self._player_pos[1]+self.range[1],
+        region = self._maze[self._player_pos[0]-self.range[0]:1+self._player_pos[0]+self.range[0],
+                            self._player_pos[1]-self.range[1]:1+self._player_pos[1]+self.range[1],
                             ...]
-        state = np.copy(region) * 255
-        state = RLXMessageImage(Image.fromarray(state.astype(np.uint8)))
+        state = np.copy(region)
         return state
 
     @staticmethod
