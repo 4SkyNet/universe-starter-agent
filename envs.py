@@ -3,6 +3,7 @@ from gym.spaces.box import Box
 import numpy as np
 import gym
 from gym import spaces
+from maze import MazeEnv
 import logging
 import universe
 from universe import vectorized
@@ -21,6 +22,8 @@ def create_env(env_id, client_id, remotes, **kwargs):
         return create_flash_env(env_id, client_id, remotes, **kwargs)
     elif spec.tags.get('atari', False) and spec.tags.get('vnc', False):
         return create_vncatari_env(env_id, client_id, remotes, **kwargs)
+    elif env_id.startswith('level'):
+        return MazeEnv(env_id)
     else:
         # Assume atari.
         assert "." not in env_id  # universe environments have dots in names.

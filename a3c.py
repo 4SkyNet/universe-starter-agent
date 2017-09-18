@@ -141,7 +141,11 @@ runner appends the policy to the queue.
                 summary_writer.add_summary(summary, policy.global_step.eval())
                 summary_writer.flush()
 
-            timestep_limit = env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')
+            if hasattr(env, 'range'):
+                timestep_limit = env.timestep_limit
+            else:
+                timestep_limit = env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')
+
             if terminal or length >= timestep_limit:
                 terminal_end = True
                 if length >= timestep_limit or not env.metadata.get('semantics.autoreset'):
@@ -169,19 +173,26 @@ should be computed.
 
         self.env = env
         self.task = task
+        if hasattr(env, 'range'):
+            shape = env.shape
+            action_size = env.action_size
+        else:
+            shape = env.observation_space.shape
+            action_size = env.action_space.n
+
         worker_device = "/job:worker/task:{}/cpu:0".format(task)
         with tf.device(tf.train.replica_device_setter(1, worker_device=worker_device)):
             with tf.variable_scope("global"):
-                self.network = LSTMPolicy(env.observation_space.shape, env.action_space.n)
+                self.network = LSTMPolicy(shape, action_size)
                 self.global_step = tf.get_variable("global_step", [], tf.int32, initializer=tf.constant_initializer(0, dtype=tf.int32),
                                                    trainable=False)
 
         with tf.device(worker_device):
             with tf.variable_scope("local"):
-                self.local_network = pi = LSTMPolicy(env.observation_space.shape, env.action_space.n)
+                self.local_network = pi = LSTMPolicy(shape, action_size)
                 pi.global_step = self.global_step
 
-            self.ac = tf.placeholder(tf.float32, [None, env.action_space.n], name="ac")
+            self.ac = tf.placeholder(tf.float32, [None, action_size], name="ac")
             self.adv = tf.placeholder(tf.float32, [None], name="adv")
             self.r = tf.placeholder(tf.float32, [None], name="r")
 

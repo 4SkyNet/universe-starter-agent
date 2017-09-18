@@ -47,13 +47,20 @@ def categorical_sample(logits, d):
 class LSTMPolicy(object):
     def __init__(self, ob_space, ac_space):
         self.x = x = tf.placeholder(tf.float32, [None] + list(ob_space))
+        maze = True if ob_space[0] == 7 else False
 
-        for i in range(4):
-            x = tf.nn.elu(conv2d(x, 32, "l{}".format(i + 1), [3, 3], [2, 2]))
+        if maze:
+            for i in range(2):
+                x = tf.nn.elu(conv2d(x, 8, "l{}".format(i + 1), [3, 3], [2, 2], pad="VALID"))
+        else:
+            for i in range(4):
+                x = tf.nn.elu(conv2d(x, 32, "l{}".format(i + 1), [3, 3], [2, 2]))
         # introduce a "fake" batch dimension of 1 after flatten so that we can do LSTM over time dim
         x = tf.expand_dims(flatten(x), [0])
 
         size = 256
+        if maze:
+            size = 64
         if use_tf100_api:
             lstm = rnn.BasicLSTMCell(size, state_is_tuple=True)
         else:
