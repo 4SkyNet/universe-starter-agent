@@ -33,6 +33,12 @@ class MazeEnv(object):
         self._maze, self._step_count = None, None
         self._goal_pos, self._player_pos = None, None
         self._episode_reward = 0
+
+        if env[-1] == '1':
+            self._init_maze = self._init_random_maze
+        else:
+            self._spawns, self._goal = self._read_spawns(env)
+            self._init_maze = self._init_spawn_maze
         self.reset()
 
     def step(self, action):
@@ -98,7 +104,7 @@ class MazeEnv(object):
                         sys.exit(-1)
         return np.asarray(lvl_read)
 
-    def _init_maze(self):
+    def _init_random_maze(self):
         # init goal position
         goal = np.zeros_like(self._level)
         while True:
@@ -121,3 +127,29 @@ class MazeEnv(object):
 
         # stack all together in depth (along third axis)
         self._maze = np.dstack((self._level, goal, player))
+
+    def _init_spawn_maze(self):
+        # init player position
+        player = np.zeros_like(self._level)
+
+        idx = np.random.randint(0, self._spawns.shape[0])
+        self._player_pos = self._spawns[idx]
+        player[self._player_pos[0], self._player_pos[1]] = 1
+
+        # stack all together in depth (along third axis)
+        self._maze = np.dstack((self._level, self._goal, player))
+
+    def _read_spawns(self, env):
+        spawn_read = []
+        with open('maps/spawn_' + env[-1] + '.txt', 'r') as spawn_file:
+            for line in spawn_file:
+                row, col = line.split()
+                spawn_read.append([int(row), int(col)])
+
+        self._goal_pos = np.array(spawn_read[-1])
+        del spawn_read[-1]
+
+        goal = np.zeros_like(self._level)
+        goal[self._goal_pos[0], self._goal_pos[1]] = 1
+
+        return np.asarray(spawn_read), goal
