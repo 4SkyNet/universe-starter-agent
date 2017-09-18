@@ -38,7 +38,8 @@ class MazeEnv(object):
         reward, terminal = self._step(action)
         state = self._process_state()
 
-        return state, reward, terminal, {}
+        info = {'reward': reward}
+        return state, reward, terminal, info
 
     def reset(self):
         while True:
