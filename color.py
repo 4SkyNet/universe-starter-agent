@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class ColorEnv(object):
-    max_steps = 10
+    max_steps = 100
 
     def __init__(self, env='color', shape=(2, 2), action_size=10, history=4):
         self.env = env
@@ -48,7 +48,8 @@ class ColorEnv(object):
 
     def _step(self, action):
         avg_color = sum(self._history) / float(self._history.maxlen)
-        reward = 1.0 - abs(action - avg_color) * self._scale * 2
+        # avg_color = sum(self._history) / float(len(self._history))
+        reward = 1.0 - (abs(action - avg_color) * self._scale)**2 * 2
 
         self._step_count += 1
         return reward, self._step_count >= self.timestep_limit
