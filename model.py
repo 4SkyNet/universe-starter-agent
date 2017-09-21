@@ -45,13 +45,18 @@ def categorical_sample(logits, d):
     return tf.one_hot(value, d)
 
 class LSTMPolicy(object):
-    def __init__(self, ob_space, ac_space):
+    def __init__(self, ob_space, ac_space, env):
+        if len(ob_space) == 2:
+            ob_space = ob_space + (1,)
         self.x = x = tf.placeholder(tf.float32, [None] + list(ob_space))
-        maze = True if ob_space[0] == 7 else False
+        maze = True if hasattr(env, 'range') else False
+        color = True if env.env.startswith('color') else False
 
         if maze:
             for i in range(2):
                 x = tf.nn.elu(conv2d(x, 8, "l{}".format(i + 1), [3, 3], [2, 2], pad="VALID"))
+        elif color:
+            x = tf.nn.elu(conv2d(x, 1, "l1", list(env.shape), list(env.shape), pad="VALID"))
         else:
             for i in range(4):
                 x = tf.nn.elu(conv2d(x, 32, "l{}".format(i + 1), [3, 3], [2, 2]))
@@ -61,6 +66,8 @@ class LSTMPolicy(object):
         size = 256
         if maze:
             size = 64
+        if color:
+            size = 1
         if use_tf100_api:
             lstm = rnn.BasicLSTMCell(size, state_is_tuple=True)
         else:

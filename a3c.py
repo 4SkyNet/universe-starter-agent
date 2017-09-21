@@ -114,6 +114,7 @@ runner appends the policy to the queue.
     length = 0
     rewards = 0
     maze = True if hasattr(env, 'range') else False
+    color = True if env.env.startswith('color') else False
 
     while True:
         terminal_end = False
@@ -142,14 +143,14 @@ runner appends the policy to the queue.
                 summary_writer.add_summary(summary, policy.global_step.eval())
                 summary_writer.flush()
 
-            if maze:
+            if maze or color:
                 timestep_limit = env.timestep_limit
             else:
                 timestep_limit = env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')
 
             if terminal or length >= timestep_limit:
                 terminal_end = True
-                if maze:
+                if maze or color:
                     last_state = env.reset()
                 else:
                     if length >= timestep_limit or not env.metadata.get('semantics.autoreset'):
@@ -178,8 +179,9 @@ should be computed.
         self.env = env
         self.task = task
         maze = True if hasattr(env, 'range') else False
+        color = True if env.env.startswith('color') else False
 
-        if maze:
+        if maze or color:
             shape = env.shape
             action_size = env.action_size
         else:
@@ -189,13 +191,13 @@ should be computed.
         worker_device = "/job:worker/task:{}/cpu:0".format(task)
         with tf.device(tf.train.replica_device_setter(1, worker_device=worker_device)):
             with tf.variable_scope("global"):
-                self.network = LSTMPolicy(shape, action_size)
+                self.network = LSTMPolicy(shape, action_size, env)
                 self.global_step = tf.get_variable("global_step", [], tf.int32, initializer=tf.constant_initializer(0, dtype=tf.int32),
                                                    trainable=False)
 
         with tf.device(worker_device):
             with tf.variable_scope("local"):
-                self.local_network = pi = LSTMPolicy(shape, action_size)
+                self.local_network = pi = LSTMPolicy(shape, action_size, env)
                 pi.global_step = self.global_step
 
             self.ac = tf.placeholder(tf.float32, [None, action_size], name="ac")
@@ -226,6 +228,8 @@ should be computed.
             local_steps = 20
             if maze:
                 local_steps = 10
+            if color:
+                local_steps = env.history
             self.runner = RunnerThread(env, pi, local_steps, visualise)
 
             grads = tf.gradients(self.loss, pi.var_list)
@@ -260,6 +264,8 @@ should be computed.
             lr = 1e-4
             if maze:
                 lr = 1e-3
+            if color:
+                lr = 1e-2
             opt = tf.train.AdamOptimizer(lr)
             self.train_op = tf.group(opt.apply_gradients(grads_and_vars), inc_step)
             self.summary_writer = None

@@ -4,6 +4,7 @@ import numpy as np
 import gym
 from gym import spaces
 from maze import MazeEnv
+from color import ColorEnv
 import logging
 import universe
 from universe import vectorized
@@ -18,6 +19,8 @@ universe.configure_logging()
 def create_env(env_id, client_id, remotes, **kwargs):
     if env_id.startswith('level'):
         return MazeEnv(env_id)
+    if env_id.startswith('color'):
+        return ColorEnv(env_id)
     spec = gym.spec(env_id)
 
     if spec.tags.get('flashgames', False):

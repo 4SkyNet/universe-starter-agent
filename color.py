@@ -19,6 +19,7 @@ class ColorEnv(object):
 
         assert len(shape) == 2, "You should provide shape as (x,y)"
         self._history = deque(maxlen=history)
+        self.history = history
         self.shape = shape
 
         self._scale = 1. / action_size
@@ -46,11 +47,10 @@ class ColorEnv(object):
         return state
 
     def _step(self, action):
-        avg_color = sum(self._history) / float(len(self._history))
-        reward = 1.0 - abs(action - avg_color) * self._scale
+        avg_color = sum(self._history) / float(self._history.maxlen)
+        reward = 1.0 - abs(action - avg_color) * self._scale * 2
 
         self._step_count += 1
-        self._episode_reward += reward
         return reward, self._step_count >= self.timestep_limit
 
     def _process_state(self):
@@ -60,4 +60,4 @@ class ColorEnv(object):
         state = np.empty(self.shape, dtype=np.float32)
         state.fill(color_num * self._scale)
 
-        return state
+        return np.expand_dims(state, axis=2)  # len(state.shape)
