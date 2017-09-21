@@ -49,7 +49,7 @@ class ColorEnv(object):
     def _step(self, action):
         avg_color = sum(self._history) / float(self._history.maxlen)
         # avg_color = sum(self._history) / float(len(self._history))
-        reward = 1.0 - (abs(action - avg_color) * self._scale)**2 * 2
+        reward = 1.0 - 2 * abs(action - avg_color) * self._scale
 
         self._step_count += 1
         return reward, self._step_count >= self.timestep_limit
