@@ -42,6 +42,9 @@ Add the following to your `.bashrc` so that you'll have the correct environment 
 
 ## Atari Pong
 
+`python train.py -w 8 -e PongDeterministic-v3 -l /tmp/pong`
+![img](imgs/pong.png "Results on Atari Pong") 
+
 `python train.py --num-workers 2 --env-id PongDeterministic-v3 --log-dir /tmp/pong`
 
 The command above will train an agent on Atari Pong using ALE simulator.
