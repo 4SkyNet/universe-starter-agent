@@ -179,7 +179,7 @@ should be computed.
         self.env = env
         self.task = task
         maze = True if hasattr(env, 'range') else False
-        color = True if env.env.startswith('color') else False
+        color = True if (hasattr(env, 'env') and env.env.startswith('color')) else False
 
         if maze or color:
             shape = env.shape

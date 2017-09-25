@@ -50,7 +50,7 @@ class LSTMPolicy(object):
             ob_space = ob_space + (1,)
         self.x = x = tf.placeholder(tf.float32, [None] + list(ob_space))
         maze = True if hasattr(env, 'range') else False
-        color = True if env.env.startswith('color') else False
+        color = True if (hasattr(env, 'env') and env.env.startswith('color')) else False
 
         if maze:
             for i in range(2):
